@@ -13,6 +13,7 @@ async function run(){
     try{
         await client.connect();
         const productsCollection = client.db('tukiTaki').collection('products');
+        const ordersCollection = client.db('tukiTaki').collection('orders');
 
         //Get all Product
         app.get('/products',async (req,res)=>{
@@ -29,6 +30,15 @@ async function run(){
             const result = await productsCollection.findOne(query);
             res.send(result);
         })
+
+        //Insert Ordered Data
+        app.post('/orders',async(req,res)=>{
+            const order = req.body;
+            const result = await ordersCollection.insertOne(order);
+            return res.send({success:true,result});
+
+        })
+
     }
     finally{
 
