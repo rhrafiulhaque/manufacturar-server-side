@@ -56,11 +56,11 @@ async function run(){
 
         })
         //Get all Reviews Data
-        app.get('/products',async (req,res)=>{
+        app.get('/reviews',async (req,res)=>{
             const query ={};
             const cursor = reviewsCollection.find(query);
-            const products = await cursor.toArray();
-            res.send(products);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
         })
 
     }
