@@ -58,7 +58,7 @@ async function run(){
         //Get all Reviews Data
         app.get('/products',async (req,res)=>{
             const query ={};
-            const cursor = productsCollection.find(query);
+            const cursor = reviewsCollection.find(query);
             const products = await cursor.toArray();
             res.send(products);
         })
