@@ -15,6 +15,7 @@ async function run(){
         const productsCollection = client.db('tukiTaki').collection('products');
         const ordersCollection = client.db('tukiTaki').collection('orders');
         const reviewsCollection = client.db('tukiTaki').collection('reviews');
+        const usersCollection = client.db('tukiTaki').collection('users');
 
         //Get all Product
         app.get('/products',async (req,res)=>{
