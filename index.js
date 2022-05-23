@@ -14,6 +14,7 @@ async function run(){
         await client.connect();
         const productsCollection = client.db('tukiTaki').collection('products');
         const ordersCollection = client.db('tukiTaki').collection('orders');
+        const reviewsCollection = client.db('tukiTaki').collection('reviews');
 
         //Get all Product
         app.get('/products',async (req,res)=>{
@@ -35,6 +36,22 @@ async function run(){
         app.post('/orders',async(req,res)=>{
             const order = req.body;
             const result = await ordersCollection.insertOne(order);
+            return res.send({success:true,result});
+
+        })
+
+        //Get Orders Data
+        app.get('/orders',async(req,res)=>{
+            const email = req.query.email;
+            const query = {email:email};
+            const orders = await ordersCollection.find(query).toArray();
+            res.send(orders);
+        })
+
+        //Insert Review Data
+        app.post('/reviews',async(req,res)=>{
+            const reviews = req.body;
+            const result = await reviewsCollection.insertOne(reviews);
             return res.send({success:true,result});
 
         })
