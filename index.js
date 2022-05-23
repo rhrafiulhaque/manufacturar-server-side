@@ -55,6 +55,13 @@ async function run(){
             return res.send({success:true,result});
 
         })
+        //Get all Reviews Data
+        app.get('/products',async (req,res)=>{
+            const query ={};
+            const cursor = productsCollection.find(query);
+            const products = await cursor.toArray();
+            res.send(products);
+        })
 
     }
     finally{
