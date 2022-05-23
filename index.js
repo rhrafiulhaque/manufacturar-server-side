@@ -17,6 +17,15 @@ async function run(){
         const reviewsCollection = client.db('tukiTaki').collection('reviews');
         const usersCollection = client.db('tukiTaki').collection('users');
 
+
+        //User Collection
+        app.put('/user/:email',async(req,res)=>{
+            const email = req.params.email;
+            const filter = {email:email};
+            
+        })
+
+
         //Get all Product
         app.get('/products',async (req,res)=>{
             const query ={};
