@@ -10,8 +10,28 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vpofv.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-async function run(){
-    try{
+
+// Verify JWT 
+
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'Unauthorized access' });
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
+
+
+
+async function run() {
+    try {
         await client.connect();
         const productsCollection = client.db('tukiTaki').collection('products');
         const ordersCollection = client.db('tukiTaki').collection('orders');
@@ -20,70 +40,79 @@ async function run(){
 
 
         //User Collection
-        app.put('/user/:email',async(req,res)=>{
+        app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            const filter = {email:email};
-            const options = {upsert:true};
+            const filter = { email: email };
+            const options = { upsert: true };
             const updateDoc = {
-                $set:user,
+                $set: user,
             };
-            const result = await usersCollection.updateOne(filter,updateDoc,options);
-            const token = jwt.sign({email:email},process.env.ACCESS_TOKEN_SECRET,{expiresIn:'1h'});
-            res.send({result,token});
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ result, token });
 
+        })
+
+        //Get User Data
+        app.get('/user/:email',async(req,res)=>{
+            const email = req.params.email;
+            const query = { email:email };
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
         })
 
 
         //Get all Product
-        app.get('/products',async (req,res)=>{
-            const query ={};
+        app.get('/products', async (req, res) => {
+            const query = {};
             const cursor = productsCollection.find(query);
             const products = await cursor.toArray();
             res.send(products);
         })
 
-         // Get Product By ID 
-         app.get('/products/:id',async(req,res)=>{
+        // Get Product By ID 
+        app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
-            const query={_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await productsCollection.findOne(query);
             res.send(result);
         })
 
         //Insert Ordered Data
-        app.post('/orders',async(req,res)=>{
+        app.post('/orders', async (req, res) => {
             const order = req.body;
             const result = await ordersCollection.insertOne(order);
-            return res.send({success:true,result});
+            return res.send({ success: true, result });
 
         })
 
         //Get Orders Data
-        app.get('/orders',async(req,res)=>{
+        app.get('/orders', verifyJWT, async (req, res) => {
             const email = req.query.email;
-            const query = {email:email};
+            const authorization = req.headers.authorization;
+            const query = { email: email };
             const orders = await ordersCollection.find(query).toArray();
             res.send(orders);
         })
 
         //Insert Review Data
-        app.post('/reviews',async(req,res)=>{
+        app.post('/reviews', async (req, res) => {
             const reviews = req.body;
             const result = await reviewsCollection.insertOne(reviews);
-            return res.send({success:true,result});
+            return res.send({ success: true, result });
 
         })
         //Get all Reviews Data
-        app.get('/reviews',async (req,res)=>{
-            const query ={};
+        app.get('/reviews', async (req, res) => {
+            const query = {};
             const cursor = reviewsCollection.find(query);
             const reviews = await cursor.toArray();
             res.send(reviews);
         })
 
     }
-    finally{
+    finally {
 
     }
 }
@@ -91,8 +120,8 @@ run().catch(console.dir);
 
 app.get('/', (req, res) => {
     res.send('Hello From Tukitaki')
-  })
-  
-  app.listen(port, () => {
+})
+
+app.listen(port, () => {
     console.log(`Listening ${port}`)
-  })
+})
