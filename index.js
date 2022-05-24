@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { verify } = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(cors());
@@ -54,7 +55,7 @@ async function run() {
 
         })
 
-        //Get User Data
+        //Get User Data By email
         app.get('/user/:email',async(req,res)=>{
             const email = req.params.email;
             const query = { email:email };
@@ -62,8 +63,48 @@ async function run() {
             res.send(users);
         })
 
+        //Get All User
+        app.get('/user', verifyJWT, async(req,res)=>{
+            const users = await usersCollection.find().toArray();
+            res.send(users);
+        })
 
-        //Get all Product
+        //User To Make Admin
+        app.put('/user/admin/:email',  async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const requester = req.decoded.email;
+            const requesterAccount = await usersCollection.findOne({email:requester});
+            if(requesterAccount.role ==='admin'){
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                  };
+                  const result = await usersCollection.updateOne(filter, updateDoc);
+                  res.send(result);
+            }else{
+                req.status(403).send({message:'forbidden'});
+            }
+          })
+
+          //Check Admin
+          app.get('/admin/:email',async(req,res)=>{
+              const email = req.params.email;
+              const user = await usersCollection.findOne({email:email});
+              const isAdmin =user.role === 'admin';
+              res.send({admin:isAdmin});
+          })
+
+
+        //   Insert Product 
+        app.post('/product', async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        })
+
+        
+        
+          //Get all Product
         app.get('/products', async (req, res) => {
             const query = {};
             const cursor = productsCollection.find(query);
@@ -71,6 +112,16 @@ async function run() {
             res.send(products);
         })
 
+          //Delete Product By ID
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: ObjectId(id) };
+            const result = productsCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+        
         // Get Product By ID 
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
